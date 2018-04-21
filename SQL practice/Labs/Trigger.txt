@@ -1,0 +1,21 @@
+--Расход бензина за рейс не должен превышать 100 литров.
+
+CREATE TRIGGER FuelForTrip
+ON [Trip] AFTER INSERT AS
+	IF EXISTS (
+		SELECT ID
+		FROM [Car] INNER JOIN [Trip] ON ID = CarID
+		WHERE (FuelConsumption * Distance / 100) > 100)
+	BEGIN
+		ROLLBACK
+	END
+
+
+--Проверка
+--У машины с ИД = 29 потребление бензина 88, соответственно за поездку было бы потрачено 88*7256 литров, что немножко больше ста
+INSERT [Trip] ([DriverID], [CarID], [DepartureTime], [ArrivalTime], [DeparturePoint], [ArrivalPoint], [Distance]) VALUES (5, 29, '19891025', '19900524', 'London', 'Chennai', 7256)
+
+--Запрос не выполнен, т.к. условие в триггере выполнилось
+--Теперь пусть длина путешествия будет 1 км
+INSERT [Trip] ([DriverID], [CarID], [DepartureTime], [ArrivalTime], [DeparturePoint], [ArrivalPoint], [Distance]) VALUES (5, 29, '19891025', '19900524', 'London', 'London', 1)
+--Все хорошо сработало, расход бензина 88 л

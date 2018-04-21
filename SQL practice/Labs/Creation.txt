@@ -1,0 +1,37 @@
+CREATE TABLE [Driver] (
+	[ID] INT NOT NULL UNIQUE,
+	[FirstName] VARCHAR(255) NOT NULL,
+	[LastName] VARCHAR(255) NOT NULL,
+	[Category] VARCHAR NOT NULL,
+	[TabelID] INT NOT NULL,
+	PRIMARY KEY ([ID])
+);
+
+CREATE TABLE [Car] (
+	[ID] INT NOT NULL UNIQUE,
+	[Capacity] INT NOT NULL,
+	[Number] VARCHAR(255) NOT NULL,
+	[Model] VARCHAR(255) NOT NULL,
+	[FuelConsumption] INT NOT NULL,
+	PRIMARY KEY ([ID])
+);
+
+CREATE TABLE [Trip] (
+	[DriverID] INT NOT NULL,
+	[CarID] INT NOT NULL,
+	[DepartureTime] DATETIME NOT NULL,
+	[ArrivalTime] DATETIME NOT NULL,
+	[DeparturePoint] VARCHAR(255) NOT NULL,
+	[ArrivalPoint] VARCHAR(255) NOT NULL,
+	[Distance] INT NOT NULL
+);
+
+
+ALTER TABLE [Trip]
+ADD CONSTRAINT [FK_Driver_ID] FOREIGN KEY ([DriverID])
+REFERENCES [Driver] ([ID]);
+
+
+ALTER TABLE [Trip]
+ADD CONSTRAINT [FK_Car_ID] FOREIGN KEY ([CarID])
+REFERENCES [Car] ([ID]);

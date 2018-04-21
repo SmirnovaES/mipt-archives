@@ -1,0 +1,85 @@
+select distinct A.model, B.model, A.speed, A.ram 
+from PC as A, PC as B
+where (A.speed = B.speed) and (A.ram = B.ram) and (A.model > B.model)
+
+
+select distinct Product.type, Product.model, Laptop.speed 
+from Product, Laptop
+where (Laptop.speed < ALL (select speed from PC)) and (Product.model = Laptop.model)
+
+
+select distinct maker, price
+from Printer, Product
+where (price = (select min(price) from Printer where color = 'y')) and (Printer.model = Product.model) and (Printer.color = 'y')
+
+
+select maker, avg (screen)
+from Product, Laptop
+where Product.model = Laptop.model
+group by Product.maker
+
+
+select maker, count(*)
+from Product
+where type = 'PC'
+group by maker
+having count(distinct model) >= 3
+
+
+select distinct maker, max(price)
+from Product, PC
+where Product.model = PC.model
+group by maker
+
+
+select speed, avg(price)
+from PC
+where speed > 600
+group by speed
+
+
+select distinct maker 
+from Product, PC
+where speed >= 750 and Product.model = PC.model
+intersect
+select distinct maker
+from Product, Laptop
+where speed >= 750 and Product.model = Laptop.model
+
+
+with all_data as (
+select model, price
+from PC
+union
+select model, price
+from Laptop
+union
+select model, price
+from Printer
+)
+select model
+from all_data
+where price in (select max(price) from all_data)
+
+
+select distinct maker 
+from Product
+where (type = 'Printer') and (maker in (
+select maker
+from PC, Product
+where (PC.model = Product.model) and (ram = (select min(ram) from PC)) and (speed = (select max(speed) from PC where ram = (select min(ram) from PC)))
+))
+
+
+with data as (
+select price, PC.model from PC, Product where PC.model=Product.model and maker = 'A'
+union all
+select price, Laptop.model from Laptop, Product where Laptop.model=Product.model and maker = 'A')
+select avg(price)
+from data
+
+
+select maker, avg(hd)
+from Product, PC
+where Product.model = PC.model and maker in (select maker from Product where type = 'Printer')
+group by maker

@@ -1,0 +1,176 @@
+28
+SELECT DISTINCT CAST( 1.0 * CASE
+                WHEN (SELECT SUM(B_VOL) FROM utB) IS NULL 
+                THEN 0 
+                ELSE (SELECT SUM(B_VOL) FROM utB) 
+            END 
+           /
+             (SELECT count(*) FROM utQ) 
+          AS NUMERIC(6,2)) avg_paint
+FROM utQ
+
+
+29
+SELECT income_o.point, income_o.date, inc, out 
+FROM income_o LEFT JOIN outcome_o 
+ON income_o.point = outcome_o.point AND income_o.date = outcome_o.date 
+UNION
+SELECT outcome_o.point, outcome_o.date, inc, out 
+FROM income_o RIGHT JOIN outcome_o
+ON income_o.point = outcome_o.point AND income_o.date = outcome_o.date
+
+
+30
+WITH mytable as ( 
+SELECT point, date, SUM(inc) as sum_inc, null as sum_out 
+FROM Income 
+GROUP BY point, date 
+UNION 
+SELECT point, date, null as sum_inc, SUM(out) as sum_out 
+FROM Outcome 
+GROUP BY point, date)
+SELECT point, date, SUM(sum_out), SUM(sum_inc) 
+FROM mytable
+GROUP BY point, date 
+ORDER BY point
+
+
+31
+SELECT DISTINCT class, country 
+FROM Classes 
+WHERE bore >= 16
+
+
+32
+WITH mytable as (
+SELECT country, classes.class, bore, name 
+FROM Classes LEFT JOIN Ships ON Classes.class = ships.class 
+UNION ALL
+SELECT DISTINCT country, class, bore, ship 
+FROM Classes LEFT JOIN Outcomes ON Classes.class = Outcomes.ship 
+WHERE ship = class AND ship NOT IN(SELECT name FROM ships))
+SELECT country, cast(avg((power(bore,3)/2)) as numeric(6,2))
+FROM mytable
+WHERE name IS NOT NULL
+GROUP BY country
+
+
+
+33
+SELECT ship
+FROM Outcomes 
+RIGHT JOIN Battles ON Outcomes.battle = Battles.name 
+WHERE name = 'North Atlantic' AND result = 'sunk'
+
+
+
+34
+SELECT name 
+FROM Ships INNER JOIN Classes ON Ships.class = Classes.class
+WHERE launched >= 1922 AND displacement > 35000 AND type = 'bb'
+
+
+
+35
+SELECT model, type 
+FROM Product 
+WHERE upper(model) NOT LIKE '%[^A-Z]%' OR model NOT LIKE '%[^0-9]%'
+
+
+36
+SELECT name 
+FROM Ships
+WHERE class = name 
+UNION 
+SELECT ship
+FROM Outcomes INNER JOIN Classes ON Classes.class = Outcomes.ship
+
+
+37
+SELECT Classes.class 
+FROM Classes 
+ LEFT JOIN ( 
+ SELECT class, name 
+ FROM Ships 
+ UNION 
+ SELECT ship, ship 
+ FROM Outcomes 
+) AS mytable ON mytable.class = Classes.class 
+GROUP BY Classes.class 
+HAVING COUNT(mytable.name) = 1
+
+
+38
+SELECT DISTINCT country
+FROM Classes
+WHERE type = 'bb'
+INTERSECT
+SELECT DISTINCT country
+FROM Classes
+WHERE type = 'bc'
+
+
+
+39
+SELECT DISTINCT Outcomes.ship
+FROM Outcomes INNER JOIN Battles ON (Battles.name = Outcomes.battle)
+WHERE (Outcomes.result = 'damaged') AND EXISTS ( 
+SELECT Outcomes.ship
+FROM Outcomes AS Outcomes2 INNER JOIN Battles AS Battles2 ON (Battles2.name = Outcomes2.battle)
+WHERE (Outcomes.ship = Outcomes2.ship) AND (Battles2.date > Battles.date) )
+
+
+
+40
+SELECT Ships.class, name, country 
+FROM Ships LEFT JOIN Classes ON Ships.class = Classes.class 
+WHERE numGuns >= 10
+
+
+
+41
+SELECT chr, value
+FROM (
+SELECT CAST(model AS CHAR(10)) AS model,
+CAST(speed AS CHAR(10)) AS speed,
+CAST(ram AS CHAR(10)) AS ram,
+CAST(hd AS CHAR(10)) AS hd,
+CAST(cd AS CHAR(10)) AS cd,
+CAST(price AS CHAR(10)) AS price
+FROM PC
+WHERE code = (SELECT MAX(code) FROM PC)) AS Code
+UNPIVOT (value FOR chr IN (model, speed, ram, hd, cd, price)) AS mytable
+
+
+42
+SELECT ship, battle
+FROM Outcomes
+WHERE result = 'sunk'
+
+
+43
+SELECT name
+FROM Battles
+WHERE DATEPART(yyyy, date) NOT IN (SELECT launched FROM Ships
+WHERE launched IS NOT NULL)
+
+
+44
+SELECT DISTINCT name
+FROM Ships
+WHERE name LIKE 'R%'
+UNION
+SELECT DISTINCT ship
+FROM Outcomes
+WHERE ship LIKE 'R%'
+
+
+
+45
+SELECT DISTINCT name
+FROM Ships
+WHERE name LIKE '% % %'
+UNION
+SELECT DISTINCT ship
+FROM Outcomes
+WHERE ship LIKE '% % %'

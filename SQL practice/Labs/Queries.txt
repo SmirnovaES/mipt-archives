@@ -1,0 +1,62 @@
+--Из лабника
+--Определить водителя, который чаще всего выполняет дальние перевозки (более 500 км).
+
+SELECT DISTINCT TOP(1) COUNT(*) AS 'Number of trips', LastName
+FROM [TRIP]
+INNER JOIN [Driver] ON DriverID = ID 
+WHERE Distance > 500
+GROUP BY DriverID, LastName
+
+--Определить среднюю грузоподъемность рейсов из Москвы.
+
+SELECT AVG(Capacity) AS 'Average Capacity'
+FROM [Car] INNER JOIN [Trip] ON ID = CarID
+WHERE DeparturePoint = 'Moscow'
+
+--Определить общий расход топлива, совершенных в 2005 году.
+
+SELECT SUM(FuelConsumption * Distance / 100) AS 'Total Fuel Consumption'
+FROM [Car] INNER JOIN [Trip] ON ID = CarID
+WHERE YEAR(DepartureTime) = 1960
+GROUP BY YEAR(DepartureTime), FuelConsumption, Distance
+
+--Определить среднне время поездки для водителя 'Каримов' (Каримова нет, есть Потапов)
+
+SELECT AVG(DISTINCT DATEDIFF(DAY, DepartureTime, ArrivalTime)) AS 'Average Time In Days'
+FROM Trip INNER JOIN Driver ON ID = DriverID
+WHERE LastName = 'Potapov'
+
+
+--Свои запросы
+
+--Выбрать водителей, которые побывали в Аддис Абабе
+
+SELECT DISTINCT FirstName, LastName
+FROM [Driver] INNER JOIN [Trip] ON ID = DriverID
+WHERE  (DeparturePoint = 'Addis Ababa')
+
+--Выбрать водителей категорий "С" и "В", которые побывали хотя бы в одной поездке длиной больше 1000 км
+
+SELECT DISTINCT FirstName, LastName, Category
+FROM [Driver] INNER JOIN [Trip] ON ID = DriverID
+WHERE (Category = 'C' OR Category = 'B') AND Distance >= 1000
+
+--Выбрать водителей, которые были хотя бы в одной поездке дольше 1000 дней на машине с грузоподъемностью больше 2
+
+SELECT DISTINCT FirstName, LastName
+FROM [Driver] INNER JOIN [Trip] ON Driver.ID = DriverID INNER JOIN [Car] ON Car.ID = CarID
+WHERE DATEDIFF(DAY, DepartureTime, ArrivalTime) > 1000 AND Capacity > 2
+
+--Удалить водителей, которые не путешествовали
+
+DELETE FROM Driver
+WHERE ID NOT IN (SELECT DriverID FROM [Trip])
+
+--Удалить водителя 24 (нарушение целостности)
+
+DELETE FROM Driver
+WHERE ID = 24
+
+--Изменить имя "Artyom" на "Artem"
+
+/UPDATE [Driver] SET FirstName = 'Artem' WHERE FirstName = 'Artyom'

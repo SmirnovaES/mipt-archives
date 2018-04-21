@@ -1,0 +1,57 @@
+select model, speed, hd from PC 
+where price < 500
+
+select distinct maker from Product
+where type = 'Printer'
+
+select model, ram, screen from Laptop
+where price > 1000
+
+select * from Printer
+where color = 'y'
+
+select model, speed, hd
+from PC
+where (cd = '12x' or cd = '24x') and price < 600
+
+select distinct Product.maker, Laptop.speed from Product, Laptop 
+where hd >= 10 and Product.model = Laptop.model
+
+select distinct Product.model, PC.price from Product, PC
+where Product.maker = 'B' and Product.model = PC.model
+union
+select distinct Product.model, Laptop.price from Product, Laptop
+where Product.maker = 'B' and Product.model = Laptop.model
+union
+select distinct Product.model, Printer.price from Product, Printer
+where Product.maker = 'B' and Product.model = Printer.model
+
+select maker from Product
+where type = 'PC'
+except
+select maker from Product
+where type = 'Laptop'
+
+select distinct Product.maker from Product, PC
+where (PC.speed >= 450) and (Product.model = PC.model)
+
+select model, price from Printer
+where price = (select max(price) from Printer)
+
+select avg(speed) from PC
+
+select avg(speed) from Laptop
+where price > 1000
+
+select avg(speed) from PC, Product
+where (maker = 'A') and (Product.model = PC.model)
+
+select distinct maker, type from product
+where maker in (select maker from product
+group by maker
+having count(distinct type) = 1
+and count(model) > 1)
+
+select hd from PC
+group by hd
+having count(*) >= 2

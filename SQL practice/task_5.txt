@@ -1,0 +1,125 @@
+46
+SELECT Outcomes.ship, displacement, numGuns 
+FROM (SELECT name AS ship, displacement, numGuns 
+FROM Ships JOIN Classes ON Classes.class=Ships.class 
+UNION 
+SELECT class AS ship, displacement, numGuns 
+FROM Classes) AS mytable 
+RIGHT JOIN Outcomes 
+ON Outcomes.ship=mytable.ship 
+WHERE battle = 'Guadalcanal'
+
+
+47
+SELECT count(*) OVER (ORDER BY mytable.mycount DESC, mytable.maker, mytable.model) number, mytable.maker, mytable.model 
+FROM (SELECT count(*) OVER (partition by maker) mycount, maker, model 
+      FROM product) mytable
+
+48
+SELECT Classes.class
+FROM Outcomes FULL JOIN Ships ON (Outcomes.ship = Ships.name) INNER JOIN Classes ON (Ships.class = Classes.class)
+WHERE (Outcomes.result = 'sunk') AND (Classes.class IS NOT NULL)
+UNION
+SELECT CLasses.class
+FROM Outcomes FULL JOIN Classes ON (Outcomes.ship = Classes.class)
+WHERE (Outcomes.result = 'sunk') AND (Classes.class IS NOT NULL)
+
+49
+SELECT Ships.name
+FROM Ships INNER JOIN Classes ON (Ships.class = Classes.class)
+WHERE Classes.bore = 16
+UNION
+SELECT Outcomes.ship
+FROM Outcomes INNER JOIN Classes ON (Outcomes.ship = Classes.class)
+WHERE Classes.bore = 16
+
+
+50
+SELECT DISTINCT Outcomes.battle
+FROM Outcomes INNER JOIN Ships ON (Outcomes.ship = Ships.name) INNER JOIN Classes ON (Classes.class = Ships.class)
+WHERE Classes.class = 'Kongo'
+
+
+51
+WITH mytable AS(SELECT Ships.name, Classes.numGuns, Classes.displacement
+FROM Ships INNER JOIN Classes ON Classes.class = Ships.class
+UNION
+SELECT Outcomes.ship, Classes.numGuns, Classes.displacement
+FROM Outcomes INNER JOIN Classes ON Classes.class = Outcomes.ship)
+
+SELECT mtcopy.name
+FROM mytable AS mtcopy
+WHERE mtcopy.numGuns >= ALL (SELECT mytable.numGuns FROM mytable WHERE mytable.displacement = mtcopy.displacement)
+
+52
+SELECT Ships.name
+FROM Ships INNER JOIN Classes ON Ships.class = Classes.class
+WHERE ISNULL(Classes.country, 'JAPAN') = 'JAPAN' AND ISNULL(Classes.type, 'bb') = 'bb' AND ISNULL(Classes.numGuns, 9) >= 9 AND ISNULL(Classes.bore, 18) < 19 AND ISNULL(Classes.displacement, 65000) <= 65000
+
+53
+SELECT CAST(AVG(CAST(numGuns AS NUMERIC(6, 2))) AS NUMERIC(6, 2))
+FROM Classes
+WHERE type = 'bb'
+
+
+54
+WITH mytable AS (SELECT Ships.name, Classes.numGuns
+FROM Ships INNER JOIN Classes ON (Classes.class = Ships.class)
+WHERE Classes.type = 'bb'
+UNION
+SELECT Outcomes.ship, Classes.numGuns
+FROM Outcomes INNER JOIN Classes ON (Classes.class = Outcomes.ship)
+WHERE Classes.type = 'bb' )
+
+SELECT CAST(AVG(CAST(numGuns AS NUMERIC(6, 2))) AS NUMERIC(6, 2))
+FROM mytable
+
+
+55
+SELECT Classes.class, ISNULL(MIN(Ships.launched), NULL)
+FROM Classes LEFT JOIN Ships ON Classes.class = Ships.class
+GROUP BY Classes.class
+
+56
+SELECT Classes.class, COUNT(ship)
+FROM Classes LEFT JOIN (SELECT ship, class 
+FROM Outcomes O LEFT JOIN Ships S ON O.ship = S.name 
+WHERE result = 'sunk') AS mytable
+ON Classes.class = mytable.class OR Classes.class = mytable.ship
+GROUP BY Classes.class
+
+57
+WITH myships AS(SELECT class FROM (SELECT class, name FROM ships
+UNION
+SELECT class, ship FROM Classes INNER JOIN Outcomes ON Classes.class = Outcomes.ship) mytable
+GROUP BY class
+HAVING COUNT(class) > 2)
+SELECT myships.class, COUNT(Outcomes.ship) FROM myships JOIN Outcomes ON
+  ( (myships.class = Outcomes.ship) OR (Outcomes.ship IN (SELECT name FROM Ships WHERE class = myships.class))) AND Outcomes.result = 'sunk'  
+GROUP BY myships.class
+
+58
+SELECT A.maker, B.type, CAST(CAST(
+(SELECT COUNT(*) 
+FROM Product 
+WHERE maker = A.maker AND type = B.type)
+* 100 AS NUMERIC(6,2)) / (SELECT COUNT(*) FROM Product WHERE maker = A.maker) AS NUMERIC(6,2)) AS prc
+FROM (SELECT DISTINCT maker FROM Product) AS A, (SELECT DISTINCT type FROM Product) AS B
+
+59
+WITH mytable AS(SELECT ISNULL(Income_o.date, Outcome_o.date) AS date, ISNULL(Income_o.point, Outcome_o.point) AS point, ISNULL(Income_o.inc, 0) - ISNULL(Outcome_o.out, 0) AS remain
+FROM Income_o FULL JOIN Outcome_o ON Income_o.point = Outcome_o.point AND Income_o.date = Outcome_o.date)
+
+SELECT point, SUM(remain)
+FROM mytable
+GROUP BY point
+
+60
+WITH mytable AS(SELECT ISNULL(Income_o.date, Outcome_o.date) AS date, ISNULL(Income_o.point, Outcome_o.point) AS point, ISNULL(Income_o.inc, 0)-ISNULL(Outcome_o.out,0) AS remain
+FROM Income_o FULL JOIN Outcome_o ON Income_o.point = Outcome_o.point AND Income_o.date = Outcome_o.date
+WHERE ISNULL(Income_o.date, Outcome_o.date) < '20010415')
+
+SELECT point, SUM(remain)
+FROM mytable
+GROUP BY point
+

@@ -1,0 +1,136 @@
+#include <stdio.h>
+#include <cstdlib>
+#include <sqlite3.h>
+#include <string>
+#include <iostream>
+
+// од работы с базами данных честно вз€т с туториала из-за лени (но при этом полностью разобран и пон€т)
+// омпилируемость программы проверена на виртуалке ubuntu, компилируемость запросов проверена в sql management studio
+
+static int callback(void *data, int argc, char **argv, char **azColName){
+   int i;
+   fprintf(stderr, "%s: ", (const char*)data);
+   for(i=0; i<argc; i++){
+      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+   }
+   printf("\n");
+   return 0;
+} //функци€, вызываема€ при успешной работа execa
+
+int main(int argc, char* argv[])
+{
+   sqlite3 *db;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   const char* data = "Callback function called";
+
+   //ѕодключимс€ к базе данных (или создадим ее, если таковой еще нет)
+   rc = sqlite3_open("recur.db", &db);
+   if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   } //обработка ошибок при создании
+
+   //—оздадим таблицы
+   sql = "CREATE TABLE Data("  \
+         "ID  INT  NOT NULL );" \
+	 "CREATE TABLE Links(" \
+	 "ID INT NOT NULL, " \
+	 "ParentID INT NOT NULL );";
+
+
+   rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
+   if( rc != SQLITE_OK ){
+   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }else{
+      fprintf(stdout, "Table created successfully\n");
+   } //обработка ошибок при создании
+
+   //«аполним таблицы
+   sql = "INSERT INTO Data (ID) "  \
+         "VALUES (1); " \
+         "INSERT INTO Data (ID) "  \
+         "VALUES (2); " \
+         "INSERT INTO Data (ID) "  \
+         "VALUES (3); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (4); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (5); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (6); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (7); "
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (8); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (9); " \
+	 "INSERT INTO Data (ID) "  \
+         "VALUES (10); " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (2, 1) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (3, 1) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (5, 2) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (4, 2) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (6, 3) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (6, 4) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (7, 6) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (8, 6) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (9, 6) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (10, 7) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (10, 8) " \
+	 "INSERT INTO Links (ID, ParentID) " \
+	 "VALUES (10, 9) ";
+
+
+   rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
+   if( rc != SQLITE_OK ){
+      fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }else{
+      fprintf(stdout, "Records created successfully\n");
+   } //обработка ошибок при добавлении данных
+
+   //—читываем данные и составл€ем запрос
+   int id, level;
+   std::cin >> id >> level;
+
+   sql = "WITH Recur (ParentID, ID, CurrLevel) AS(" \
+	 "SELECT ID, ID as ParentID, 0 as CurrLevel" \
+	 "FROM Data" \
+	 "WHERE ID = " + std::to_string(id) + " "\
+	 "UNION ALL " \
+	 "SELECT SELECT Recur.ParentID AS ParentID, Links.ParentID AS ID, Recur.CurrLevel + 1" \
+	 "FROM Recur INNER JOIN Links" \
+	 "ON Recur.ID = Links.ParentID" \
+	 ")" \
+	 "SELECT DISTINCT ID AS ParentID, ParentID AS ID" \
+ 	 "FROM Recur WHERE CurrLevel = " + std::to_string(level) + ";";
+
+
+   rc = sqlite3_exec(db, sql.c_str(), callback, (void*)data, &zErrMsg);
+   if( rc != SQLITE_OK ){
+      fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }else{
+      fprintf(stdout, "Operation done successfully\n");
+   } //обработка ошибок при запросе
+
+
+   sqlite3_close(db);
+   return 0;
+}

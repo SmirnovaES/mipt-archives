@@ -1,0 +1,25 @@
+create table my_table (id int primary key, parent_id int);
+
+insert into my_table values (2, 1);
+insert into my_table values (3, 1);
+insert into my_table values (4, 2);
+insert into my_table values (7, 4);
+insert into my_table values (5, 3);
+insert into my_table values (6, 3);
+insert into my_table values (8, 6);
+insert into my_table values (9, 8);
+insert into my_table values (10, 8);
+
+
+
+with recursive recur as(
+select id, parent_id
+from my_table
+where id = 10
+union all
+select my_table.id, my_table.parent_id
+from my_table inner join recur
+on my_table.id = recur.parent_id
+)
+select parent_id 
+from recur;
